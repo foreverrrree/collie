@@ -61,7 +61,28 @@ export function locateComposer(lines: StyledLine[]): ComposerBox | null {
 export function stripChrome(lines: StyledLine[]): StyledLine[] {
   const box = locateComposer(lines);
   if (box === null) return lines;
-  return lines.slice(0, box.promptRow);
+
+  // Codex paints one or more whitespace-only padding rows above the prompt with the same
+  // background as the composer. Starting the slice at the textual `› ` row leaves that painted
+  // padding behind as a solid bar in Collie's mirror (especially obvious when the app is light).
+  // Peel only adjacent blank rows that share the prompt's explicit background; an ordinary blank
+  // transcript separator has no background and must stay in the mirror.
+  const promptBackgrounds = new Set(
+    lines[box.promptRow]!.segments
+      .map((segment) => segment.bg)
+      .filter((background): background is string => background !== undefined),
+  );
+  let start = box.promptRow;
+  while (
+    start > 0 &&
+    isBlank(lineText(lines[start - 1]!)) &&
+    lines[start - 1]!.segments.some(
+      (segment) => segment.bg !== undefined && promptBackgrounds.has(segment.bg),
+    )
+  ) {
+    start--;
+  }
+  return lines.slice(0, start);
 }
 
 /** The status row, styled, for the strip above the phone composer. Empty when no composer. */

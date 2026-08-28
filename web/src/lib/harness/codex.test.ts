@@ -86,8 +86,15 @@ describe("composerReady — the gate the reply path pre-flights on", () => {
 describe("chrome", () => {
   it("strips the prompt row and status row; the transcript stays", () => {
     const lines = fixtureLines("codex--fresh-idle.txt");
+    const box = locateComposer(lines);
+    expect(box).not.toBeNull();
+    const topPadding = lines[box!.promptRow - 1]!;
+    expect(lineText(topPadding).trim()).toBe("");
+    expect(topPadding.segments.some((segment) => segment.bg !== undefined)).toBe(true);
+
     const stripped = stripChrome(lines);
     const text = stripped.map(lineText).join("\n");
+    expect(stripped).not.toContain(topPadding);
     expect(text).not.toContain("Ask Codex to do anything");
     expect(text).not.toContain("Context 1");
     expect(text).toContain("OpenAI Codex");
