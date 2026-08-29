@@ -128,7 +128,13 @@ export function NavTray({ onSend, presets = CONTROL_PRESETS, onQueueChange, disa
   // `repeatable` opts a button into hold-to-repeat. While held, the button shows a live "×N" count
   // instead of running the per-press echo — echo.run per repeat tick would restart the ✓ timer ~11
   // times a second and strobe, the same reason sibling dimming is banned on this pad.
-  const navBtn = (content: ReactNode, keys: string[], aria?: string, repeatable = false) => {
+  const navBtn = (
+    content: ReactNode,
+    keys: string[],
+    aria?: string,
+    repeatable = false,
+    className?: string,
+  ) => {
     const id = keys.join(" ");
     const phase = echo.phaseOf(id);
     const held = repeatable && repeat.holding === keys[0];
@@ -143,7 +149,10 @@ export function NavTray({ onSend, presets = CONTROL_PRESETS, onQueueChange, disa
         aria-label={aria}
         // touch-action/select-none: without them a held button on iOS starts a text selection and
         // Android may treat the hold as a scroll gesture, both of which cancel the pointer stream.
-        className="h-10 touch-manipulation select-none px-0 text-sm font-medium"
+        className={cn(
+          "h-12 min-w-16 shrink-0 touch-manipulation select-none px-3 text-sm font-medium",
+          className,
+        )}
       >
         {held ? (
           <span className="mx-auto flex items-center gap-1">
@@ -172,7 +181,7 @@ export function NavTray({ onSend, presets = CONTROL_PRESETS, onQueueChange, disa
         disabled={disabled}
         onClick={() => arm(m)}
         aria-pressed={mode !== "off"}
-        className="h-10 px-0 text-sm font-medium"
+        className="h-12 min-w-16 shrink-0 touch-manipulation select-none px-3 text-sm font-medium"
       >
         {mode === "locked" && <Lock className="size-3" />}
         {label}
@@ -221,44 +230,31 @@ export function NavTray({ onSend, presets = CONTROL_PRESETS, onQueueChange, disa
 
       {tab === "keys" ? (
         <>
-          {/* Same physical-keyboard geometry as the composer's inline quick keys, for muscle memory:
-              Esc top-left, Tab directly below it, arrows as an inverted-T on the right. The Esc/Up
-              gap holds a quick Ctrl+C — the one interrupt chord worth a single tap, without opening
-              Presets (which still lists it alongside the other Ctrl chords for discoverability).
-              It carries the preset's own spelling, "Ctrl C" — the same chord must not read two ways
-              in one drawer, and tmux notation ("C-c") is the spelling this codebase keeps out of
-              sight precisely because it is not what Herdr accepts either. */}
-          <div className="grid grid-cols-4 gap-1.5">
-            {navBtn("Esc", ["Escape"])}
-            {navBtn("Ctrl C", ["ctrl+c"], "Ctrl+C")}
-            {navBtn(<ArrowUp className="size-4" />, ["Up"], "Up", true)}
-            {navBtn("⏎ Enter", ["Enter"])}
-            {navBtn("Tab", ["Tab"])}
-            {navBtn(<ArrowLeft className="size-4" />, ["Left"], "Left", true)}
-            {navBtn(<ArrowDown className="size-4" />, ["Down"], "Down", true)}
-            {navBtn(<ArrowRight className="size-4" />, ["Right"], "Right", true)}
-          </div>
-
-          {/* Space — full-width, spacebar-style, on its own row */}
-          <Button
-            type="button"
-            variant={echo.phaseOf("Space") === "idle" ? "outline" : "default"}
-            size="sm"
-            disabled={disabled}
-            onClick={() => fire(["Space"], "Space")}
-            className="h-10 w-full text-sm font-medium"
+          {/* Mobile terminal accessory keyboard: one long, full-width strip rather than a compact
+              desktop-shaped grid. It scrolls horizontally like Orca mobile, leaving the terminal
+              more vertical room while every key keeps a 48px touch target. `w-max min-w-full`
+              means short sets fill the phone and long sets extend naturally; the scrollbar stays
+              visual-noise-free but touch/trackpad scrolling remains native. */}
+          <div
+            role="group"
+            aria-label="Terminal keyboard"
+            data-testid="terminal-keyboard-strip"
+            className="-mx-3 overflow-x-auto overscroll-x-contain px-3 pb-1 touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {echo.phaseOf("Space") === "done" ? <Check className="size-4" /> : "Space"}
-          </Button>
-
-          {/* Modifiers (checkboxes that cycle off → once → locked → off): arm any subset and the
-              next key composes as their combined chord. Locked (Lock glyph) stays armed across
-              presses and Sends. Same pressed styling as everything else (default = armed, outline =
-              idle). Display order Shift · Ctrl · Alt; compose order is canonical regardless of taps. */}
-          <div className="grid grid-cols-3 gap-1.5">
-            {modBtn("shift", "⇧ Shift")}
-            {modBtn("ctrl", "Ctrl")}
-            {modBtn("alt", "Alt")}
+            <div className="flex w-max min-w-full gap-1.5">
+              {navBtn("Esc", ["Escape"])}
+              {navBtn("Tab", ["Tab"])}
+              {modBtn("ctrl", "Ctrl")}
+              {modBtn("alt", "Alt")}
+              {modBtn("shift", "⇧ Shift")}
+              {navBtn("Ctrl C", ["ctrl+c"], "Ctrl+C")}
+              {navBtn(<ArrowLeft className="size-4" />, ["Left"], "Left", true)}
+              {navBtn(<ArrowUp className="size-4" />, ["Up"], "Up", true)}
+              {navBtn(<ArrowDown className="size-4" />, ["Down"], "Down", true)}
+              {navBtn(<ArrowRight className="size-4" />, ["Right"], "Right", true)}
+              {navBtn("Space", ["Space"], "Space", false, "min-w-32")}
+              {navBtn("⏎ Enter", ["Enter"], "Enter", false, "min-w-24")}
+            </div>
           </div>
 
           {/* Presets (collapsed by default; expanding keeps everything inline, never covering the

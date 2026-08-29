@@ -42,38 +42,46 @@ describe("NavTray", () => {
     expect(onSend.mock.calls).toEqual([[["1"]], [["5"]], [["9"]]]);
   });
 
-  it("keys tab: Esc leads row 1, Tab leads row 2 (physical-keyboard geometry)", () => {
+  it("keys tab is one full-width, horizontally scrollable touch keyboard", () => {
     render(<NavTray onSend={vi.fn()} />);
 
+    const strip = screen.getByRole("group", { name: "Terminal keyboard" });
     const esc = screen.getByRole("button", { name: "Esc" });
-    const up = screen.getByRole("button", { name: "Up" });
-    const enter = screen.getByRole("button", { name: /Enter/ });
     const tab = screen.getByRole("button", { name: "Tab" });
+    const ctrl = screen.getByRole("button", { name: "Ctrl" });
+    const alt = screen.getByRole("button", { name: "Alt" });
+    const shift = screen.getByRole("button", { name: /⇧ Shift/ });
+    const ctrlC = screen.getByRole("button", { name: "Ctrl+C" });
     const left = screen.getByRole("button", { name: "Left" });
+    const up = screen.getByRole("button", { name: "Up" });
     const down = screen.getByRole("button", { name: "Down" });
     const right = screen.getByRole("button", { name: "Right" });
     const space = screen.getByRole("button", { name: "Space" });
+    const enter = screen.getByRole("button", { name: "Enter" });
 
-    // a.compareDocumentPosition(b) & DOCUMENT_POSITION_FOLLOWING !== 0 means a comes before b.
     const isBefore = (a: HTMLElement, b: HTMLElement) =>
       (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
 
-    // Esc is the very first key button — top-left of row 1, before ↑ and ⏎ (row 1) and Tab (row 2).
-    expect(isBefore(esc, up)).toBe(true);
-    expect(isBefore(esc, enter)).toBe(true);
+    expect(strip).toHaveClass("overflow-x-auto", "touch-pan-x");
+    expect(strip.querySelector(".w-max")).not.toBeNull();
     expect(isBefore(esc, tab)).toBe(true);
-
-    // Tab begins row 2 — after all of row 1, before ← ↓ → which follow it in the same row.
-    expect(isBefore(enter, tab)).toBe(true);
-    expect(isBefore(tab, left)).toBe(true);
-    expect(isBefore(tab, down)).toBe(true);
-    expect(isBefore(tab, right)).toBe(true);
-
-    // Space sits below the two rows, on its own full-width row.
+    expect(isBefore(tab, ctrl)).toBe(true);
+    expect(isBefore(ctrl, alt)).toBe(true);
+    expect(isBefore(alt, shift)).toBe(true);
+    expect(isBefore(shift, ctrlC)).toBe(true);
+    expect(isBefore(ctrlC, left)).toBe(true);
+    expect(isBefore(left, up)).toBe(true);
+    expect(isBefore(up, down)).toBe(true);
+    expect(isBefore(down, right)).toBe(true);
     expect(isBefore(right, space)).toBe(true);
+    expect(isBefore(space, enter)).toBe(true);
+
+    for (const key of [esc, tab, ctrl, alt, shift, ctrlC, left, up, down, right, space, enter]) {
+      expect(key).toHaveClass("h-12", "shrink-0", "touch-manipulation");
+    }
   });
 
-  it("a quick Ctrl+C button sits in the Esc/Up gap and fires ctrl+c immediately", async () => {
+  it("a quick Ctrl+C touch key sits before the arrows and fires ctrl+c immediately", async () => {
     const user = userEvent.setup();
     const onSend = vi.fn();
     render(<NavTray onSend={onSend} />);
@@ -484,6 +492,21 @@ describe("NavTray — hold to repeat", () => {
 
     expect(delivered(onSend).total).toBe(1);
     expect(onSend).toHaveBeenCalledWith(["Down"]);
+  });
+
+  it("a horizontal swipe starting on an arrow scrolls the strip without sending or repeating", async () => {
+    const onSend = vi.fn(async () => true);
+    render(<NavTray onSend={onSend} />);
+    const down = screen.getByRole("button", { name: "Down" });
+
+    fireEvent.pointerDown(down, { pointerId: 7, clientX: 40, clientY: 20 });
+    fireEvent.pointerMove(down, { pointerId: 7, clientX: 80, clientY: 20 });
+    await vi.advanceTimersByTimeAsync(HOLD_DELAY + REPEAT * 3);
+    fireEvent.pointerUp(down, { pointerId: 7, clientX: 80, clientY: 20 });
+    fireEvent.click(down); // some mobile browsers still synthesize one after the pan
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("a hold repeats, and the release's synthesized click does NOT add an extra key", async () => {

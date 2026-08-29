@@ -31,8 +31,12 @@ const MAX_BATCH = 25;
  *  the failure mode being guarded is a phone holding ↓ forever inside a real terminal. */
 const MAX_HOLD_MS = 4_000;
 
+/** A finger moving farther than this is scrolling the horizontal key strip, not holding a key. */
+const MOVE_CANCEL_PX = 10;
+
 export interface HoldRepeatBinding {
   onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
+  onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
   onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
   onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
   onContextMenu: (e: SyntheticEvent) => void;
@@ -72,6 +76,11 @@ export function useHoldRepeat(
   /** Set once a hold engages, so the synthesized click that follows the release is swallowed
    *  (otherwise the tap path would send one extra key on top of everything the pump sent). */
   const engaged = useRef(false);
+  /** A horizontal swipe cancelled the hold; swallow the click some browsers synthesize afterward. */
+  const cancelledByMove = useRef(false);
+  const pointerOrigin = useRef<{ x: number; y: number } | null>(null);
+  const captureTarget = useRef<HTMLElement | null>(null);
+  const capturePointerId = useRef<number | null>(null);
   const alive = useRef(true);
   // onFlush is re-created each render by the caller; read it through a ref so the pump closure never
   // goes stale without making every callback below depend on it.
@@ -87,15 +96,22 @@ export function useHoldRepeat(
     deadman.current = null;
   }, []);
 
+  const clearPointer = useCallback(() => {
+    pointerOrigin.current = null;
+    captureTarget.current = null;
+    capturePointerId.current = null;
+  }, []);
+
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
       stopTimers();
+      clearPointer();
       heldKey.current = null;
       pending.current = 0;
     };
-  }, [stopTimers]);
+  }, [clearPointer, stopTimers]);
 
   // Drain the accumulator, one call at a time. Re-entrant by design: each completion pumps again, so
   // a hold self-clocks to whatever the network is actually doing.
@@ -127,26 +143,34 @@ export function useHoldRepeat(
   // set until the pump drains so the trailing flush still knows which key it is sending.
   const release = useCallback(() => {
     stopTimers();
+    clearPointer();
     if (heldKey.current !== null) pump();
     if (pending.current === 0) heldKey.current = null;
     setHolding(null);
     setCount(0);
-  }, [pump, stopTimers]);
+  }, [clearPointer, pump, stopTimers]);
 
   const bind = useCallback(
     (key: string, onTap: () => void): HoldRepeatBinding => ({
       onPointerDown: (e) => {
         if (!enabled) return;
         engaged.current = false;
-        // Capture so a thumb sliding off the button still delivers pointerup here — an uncaptured
-        // pointer that leaves the element strands the timers, which is the runaway-repeat scenario.
-        try {
-          e.currentTarget.setPointerCapture(e.pointerId);
-        } catch {
-          // Capture is best-effort; the dead-man timer is the real backstop.
-        }
+        cancelledByMove.current = false;
+        pointerOrigin.current = { x: e.clientX, y: e.clientY };
+        captureTarget.current = e.currentTarget;
+        capturePointerId.current = e.pointerId;
         engageTimer.current = setTimeout(() => {
+          engageTimer.current = null;
           engaged.current = true;
+          // Capture only once the hold wins. Capturing on pointerdown steals the horizontal swipe
+          // from the scrollable keyboard strip before the browser can decide it is a pan.
+          try {
+            if (captureTarget.current && capturePointerId.current !== null) {
+              captureTarget.current.setPointerCapture(capturePointerId.current);
+            }
+          } catch {
+            // Capture is best-effort; the dead-man timer is the real backstop.
+          }
           heldKey.current = key;
           pending.current = 1;
           setHolding(key);
@@ -161,12 +185,22 @@ export function useHoldRepeat(
           deadman.current = setTimeout(release, MAX_HOLD_MS);
         }, HOLD_DELAY_MS);
       },
+      onPointerMove: (e) => {
+        const origin = pointerOrigin.current;
+        if (engageTimer.current === null || origin === null) return;
+        if (Math.hypot(e.clientX - origin.x, e.clientY - origin.y) < MOVE_CANCEL_PX) return;
+        clearTimeout(engageTimer.current);
+        engageTimer.current = null;
+        cancelledByMove.current = true;
+        clearPointer();
+      },
       onPointerUp: () => {
         if (engageTimer.current) {
           clearTimeout(engageTimer.current);
           engageTimer.current = null;
         }
         if (engaged.current) release();
+        else clearPointer();
       },
       onPointerCancel: () => {
         if (engageTimer.current) {
@@ -174,10 +208,16 @@ export function useHoldRepeat(
           engageTimer.current = null;
         }
         if (engaged.current) release();
+        else clearPointer();
       },
       // iOS fires a long-press selection callout over a held button without this.
       onContextMenu: (e) => e.preventDefault(),
       onClick: (e) => {
+        if (cancelledByMove.current) {
+          e.preventDefault();
+          cancelledByMove.current = false;
+          return;
+        }
         // A hold already sent everything through the pump; the release's synthesized click must not
         // add one more. A plain tap never engaged, so it falls through to the normal handler.
         if (engaged.current) {
@@ -188,7 +228,7 @@ export function useHoldRepeat(
         onTap();
       },
     }),
-    [enabled, pump, release],
+    [clearPointer, enabled, pump, release],
   );
 
   return { bind, holding, count };
