@@ -10,6 +10,7 @@ import type { NotifyPrefs, NotifyPrefsStore } from "./notify-prefs.ts";
 import { createOperatorCommands } from "./operator-commands.ts";
 import { createOperatorKeys } from "./operator-keys.ts";
 import { createOperatorQuickReplies } from "./operator-quick-replies.ts";
+import { neutralizeCodexComposerBackground } from "./pane-display.ts";
 import {
   DEFAULT_PROMPT_TAIL_LINES,
   verifyExpectedPrompt,
@@ -549,7 +550,12 @@ async function readPane(
  * standing up Bun.serve / the socket client.
  */
 export function paneReadResponse(paneId: string, read: PaneRead): PaneReadResponse {
-  return { paneId, text: read.text, truncated: read.truncated, revision: read.revision };
+  return {
+    paneId,
+    text: neutralizeCodexComposerBackground(read.text),
+    truncated: read.truncated,
+    revision: read.revision,
+  };
 }
 
 /**
