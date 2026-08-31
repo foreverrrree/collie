@@ -25,6 +25,7 @@ import { detectApprovalRegion } from "./approval";
 import { detectAskRegion } from "./ask";
 import { detectTrustRegion } from "./trust";
 import { decorateCodexDisplay } from "./display";
+import { codexDraftCarriesSend } from "./paste";
 
 function raw(lines: StyledLine[]): Block {
   return { kind: "raw", lines: decorateCodexDisplay(lines) };
@@ -74,4 +75,5 @@ export const codexAdapter: HarnessAdapter = {
   extractInputDraft,
   composerReady,
   composerPrompt,
+  draftCarriesSend: codexDraftCarriesSend,
 };
