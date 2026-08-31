@@ -1,0 +1,30 @@
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Model presets
+Current: preset Fable + Opus + Codex · anthropic/claude-fable-5 (high)
+
+>  
+
+  ✓ CODEX
+❯   ✓ Codex Eco
+    ✓ Codex Medium
+    ✓ Codex Pro
+    ✓ LunaMaxxing
+  ✓ OPENCODEGO
+  ✗ COMMAND CODE GOAT
+  ✓ COMBOS (current)
+  Already saved as Fable + Opus + Codex
+  Image Role: No image model set
+  Smart routing setup
+  Browse all models
+
+  Preset preview: Codex Eco
+  DEFAULT: openai-codex/gpt-5.6-terra:low
+  EXECUTOR: openai-codex/gpt-5.6-luna:low
+  PLANNER: openai-codex/gpt-5.6-luna:high
+  CRITIC: openai-codex/gpt-5.6-terra:xhigh
+  ARCHITECT: openai-codex/gpt-5.6-terra:high
+
+  Press Enter to apply or d to set as default
+
+────────────────────────────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,36 @@
+ ⬢ Anthropic Fable 5 · ◕ high · 1.3% / 🗑 /tmp ─────────────────────────── (sub) / v0.15.6
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Add MiniMax/GLM presets with /provider add --preset <id>; custom API providers with /provider add
+--compat <openai|anthropic> --provider <id> --base-url <url> --api-key-env <ENV> --model <model>.
+
+Model presets
+Current: preset Fable + Opus + Codex · anthropic/claude-fable-5 (high)
+  DEFAULT: anthropic/claude-fable-5 (high)
+  EXECUTOR: openai-codex/gpt-5.6-terra (medium)
+  PLANNER: anthropic/claude-opus-5 (medium)
+  CRITIC: anthropic/claude-opus-5 (high)
+  ARCHITECT: openai-codex/gpt-5.6-sol (xhigh)
+
+>  
+
+❯ ✓ CODEX
+  ✓ OPENCODEGO
+  ✗ COMMAND CODE GOAT
+  ✗ macOS Local (oMLX)
+  ✓ OPEN WEIGHT MODELS (PROVIDER AGNOSTIC)
+  ✓ CLAUDE
+  ✗ GLM
+  ✗ KIMI CODING PLAN
+  ✗ MIMO
+  ✗ GROK
+  ✗ CURSOR
+  ✗ MINIMAX
+  ✗ ALIBABA TOKEN PLAN
+  ✓ COMBOS (current)
+  Already saved as Fable + Opus + Codex
+  Image Role: No image model set
+  Smart routing setup
+  Browse all models
+
+────────────────────────────────────────────────────────────────────────────────────────────────────

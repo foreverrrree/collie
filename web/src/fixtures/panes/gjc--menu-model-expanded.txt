@@ -1,0 +1,32 @@
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+Model presets
+Current: preset Fable + Opus + Codex · anthropic/claude-fable-5 (high)
+  DEFAULT: anthropic/claude-fable-5 (high)
+
+>  
+
+❯ ✓ CODEX
+    ✓ Codex Eco
+    ✓ Codex Medium
+    ✓ Codex Pro
+    ✓ LunaMaxxing
+  ✓ OPENCODEGO
+  ✗ COMMAND CODE GOAT
+  ✗ macOS Local (oMLX)
+  ✓ OPEN WEIGHT MODELS (PROVIDER AGNOSTIC)
+  ✓ CLAUDE
+  ✗ GLM
+  ✗ KIMI CODING PLAN
+  ✗ MIMO
+  ✗ GROK
+  ✗ CURSOR
+  ✗ MINIMAX
+  ✗ ALIBABA TOKEN PLAN
+  ✓ COMBOS (current)
+  Already saved as Fable + Opus + Codex
+  Image Role: No image model set
+  Smart routing setup
+  Browse all models
+
+────────────────────────────────────────────────────────────────────────────────────────────────────

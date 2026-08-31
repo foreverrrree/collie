@@ -110,6 +110,20 @@ describe("mirror line wrapping", () => {
     expect(pannedPre.querySelector("span.inline-block")).toBeNull();
     expect(pannedPre.textContent).toBe(`${border}\n`);
   });
+
+  it("also clips GJC's labelled, cornered and status borders instead of wrapping one terminal row", () => {
+    const tool = ` ┌─── ✔ Bash ${"─".repeat(32)}┐ `;
+    const status = ` ⬢ GPT-5.6-Sol · low ${"─".repeat(32)} (sub) / v0.15.6 `;
+    const composer = `╭${"─".repeat(40)}╮`;
+    const prose = `the value ${"─".repeat(10)} remains ordinary prose`;
+    const { container } = render(
+      <AnsiOutput text={`${tool}\n${status}\n${composer}\n${prose}\n`} agent="gjc" />,
+    );
+    const clipped = [...container.querySelectorAll("span.inline-block")].map((node) => node.textContent);
+
+    expect(clipped).toEqual([tool, status, composer]);
+    expect(clipped).not.toContain(prose);
+  });
 });
 
 // URLs printed by an agent are plain characters — the mirror finds them and wraps those ranges in

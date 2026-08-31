@@ -2,11 +2,9 @@
 // Herdr snapshot `agent` string to its HarnessAdapter; anything absent from the map has no adapter,
 // so it keeps the universal raw mirror (the T1 fallback). Both gates route through here — the render
 // pipeline (harness/index buildBlocks) and agent-chat's status strip — so the policy can't drift, and
-// adding a further verified agent is a one-line change to ADAPTERS. The list holds three today:
-// claude, which lifts every block kind; codex, which is Tier 1 chrome plus Tier-2 probed trust /
-// approval / question lifts; grok, which is Tier 1 chrome plus Tier-2 probed permission / ask /
-// plan lifts; and omp, which is Tier 1 and lifts none — it contributes chrome
-// stripping and the composer gate only. Adapters register by their EXACT agent string only —
+// adding a further verified agent is a one-line change to ADAPTERS. Claude lifts every block kind;
+// codex and grok contribute their own probed dialog families; omp stays Tier 1; and GJC contributes
+// its probed composer plus Ctrl+L model-preset picker. Adapters register by their EXACT agent string only —
 // prefix-matching here was the AltanS/collie#99 reject: it would hand a harness's live keystroke
 // recipes to any agent string sharing the prefix. `hasBlockGrammar` replaces the old
 // grammar/agents predicate:
@@ -18,6 +16,7 @@ import { claudeAdapter } from "./claude";
 import { codexAdapter } from "./codex";
 import { grokAdapter } from "./grok";
 import { ompAdapter } from "./omp";
+import { gjcAdapter } from "./gjc";
 import { agyAdapter, antigravityAdapter } from "./agy";
 
 // Built FROM the adapter list (not a hand-written literal) so a key can't silently drift from its
@@ -27,6 +26,7 @@ const ADAPTERS: Record<string, HarnessAdapter> = Object.fromEntries(
     codexAdapter,
     grokAdapter,
     ompAdapter,
+    gjcAdapter,
     agyAdapter,
     antigravityAdapter,
   ].map((a) => [a.agent, a]),
